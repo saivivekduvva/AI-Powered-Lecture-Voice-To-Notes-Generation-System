@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Streamlit secrets (if any)
+.streamlit/secrets.toml
+
+# Temporary / runtime files
+temp.wav
+*.log
