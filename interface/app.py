@@ -95,31 +95,46 @@ uploaded_file = st.file_uploader(
 # ---------------- PROCESS ----------------
 if uploaded_file:
     try:
+        # Save temp audio
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(uploaded_file.read())
             temp_audio_path = tmp.name
 
+        # Speech to text
         with st.spinner("🔊 Transcribing audio..."):
             transcript = speech_to_text(temp_audio_path)
 
+        # Clean text
         with st.spinner("🧹 Cleaning transcript..."):
             cleaned_text = clean_transcript(transcript)
 
+        # Notes & summary
         with st.spinner("🧠 Generating notes & summary..."):
             notes = generate_study_materials(cleaned_text)
 
+        # Flashcards (SAFE)
         with st.spinner("🧠 Generating GenAI flashcards..."):
-            flashcards = generate_flashcards(notes["text_notes"])
+            raw_flashcards = generate_flashcards(notes["text_notes"])
 
-        # ---- SAFE QUIZ GENERATION ----
-        quiz = None
+            if isinstance(raw_flashcards, list):
+                flashcards = [
+                    c for c in raw_flashcards
+                    if isinstance(c, dict)
+                    and "question" in c
+                    and "answer" in c
+                ]
+            else:
+                flashcards = []
+
+        # Quiz (SAFE)
+        quiz = []
         with st.spinner("🧪 Generating GenAI quiz..."):
             try:
-                quiz = generate_quiz(notes["text_notes"])
-                if not isinstance(quiz, list):
-                    quiz = None
+                q = generate_quiz(notes["text_notes"])
+                if isinstance(q, list):
+                    quiz = q
             except Exception:
-                quiz = None
+                quiz = []
 
         st.success("✅ Study materials generated successfully!")
 
@@ -135,19 +150,19 @@ if uploaded_file:
         # ---------- TOPIC ----------
         with tab1:
             st.markdown("<div class='glass'>", unsafe_allow_html=True)
-            st.write(notes["topic"])
+            st.write(notes.get("topic", ""))
             st.markdown("</div>", unsafe_allow_html=True)
 
         # ---------- NOTES ----------
         with tab2:
             st.markdown("<div class='glass'>", unsafe_allow_html=True)
-            st.text(notes["text_notes"])
+            st.text(notes.get("text_notes", ""))
             st.markdown("</div>", unsafe_allow_html=True)
 
         # ---------- SUMMARY ----------
         with tab3:
             st.markdown("<div class='glass'>", unsafe_allow_html=True)
-            st.write(notes["smart_summary"])
+            st.write(notes.get("smart_summary", ""))
             st.markdown("</div>", unsafe_allow_html=True)
 
         # ---------- FLASHCARDS ----------
@@ -157,10 +172,11 @@ if uploaded_file:
                     with st.expander(f"📌 Flashcard {i}"):
                         st.markdown(f"**❓ Question**: {card.get('question', '')}")
                         st.markdown(f"**✅ Answer**: {card.get('answer', '')}")
+
                         if card.get("concept"):
-                            st.markdown(f"🧠 *Concept*: {card.get('concept')}")
+                            st.markdown(f"🧠 *Concept*: {card['concept']}")
             else:
-                st.info("No flashcards generated.")
+                st.info("⚠️ Flashcards could not be generated for this lecture.")
 
         # ---------- QUIZ ----------
         with tab5:
@@ -177,7 +193,7 @@ if uploaded_file:
                             st.markdown(f"✍ **Answer**: {q.get('answer', '')}")
 
                         if q.get("concept"):
-                            st.markdown(f"🧠 *Concept*: {q.get('concept')}")
+                            st.markdown(f"🧠 *Concept*: {q['concept']}")
             else:
                 st.info("⚠️ Quiz could not be generated for this lecture.")
 

@@ -1,24 +1,25 @@
 import json
+import re
 from genai.gemini_client import get_gemini_model
 
 FLASHCARD_PROMPT = """
-You are an AI tutor helping students revise lectures.
+You are a student-friendly revision assistant.
 
-Generate EXACTLY 5 high-quality semantic flashcards
-based ONLY on the lecture notes below.
+Generate EXACTLY 5 SIMPLE flashcards from the lecture notes below.
 
-Rules:
-- Questions must test understanding, not memorization
-- Avoid vague or generic questions
-- Each flashcard must have a clear concept
+RULES:
+- Questions must be SHORT and DIRECT
+- Avoid "why" and "how"
+- Answers must be ONE LINE
+- Use easy, exam-friendly language
+- Output ONLY valid JSON
 
-Return ONLY valid JSON in this format:
-
+FORMAT:
 [
   {{
-    "question": "Clear conceptual question",
-    "answer": "Concise but complete answer",
-    "concept": "Core idea being tested"
+    "question": "Short question",
+    "answer": "One line answer",
+    "concept": "Keyword"
   }}
 ]
 
@@ -29,14 +30,23 @@ Lecture Notes:
 def generate_flashcards(notes: str):
     model = get_gemini_model()
 
-    prompt = FLASHCARD_PROMPT.format(notes=notes)
+    response = model.generate_content(
+        FLASHCARD_PROMPT.format(notes=notes)
+    )
 
-    response = model.generate_content(prompt)
+    raw = response.text.strip()
 
     try:
-        return json.loads(response.text)
-    except json.JSONDecodeError:
-        return {
-            "error": "Invalid JSON returned by model",
-            "raw_output": response.text
-        }
+        json_text = re.search(r"\[.*\]", raw, re.S).group()
+        data = json.loads(json_text)
+
+        # Validate structure
+        valid_cards = []
+        for c in data:
+            if isinstance(c, dict) and "question" in c and "answer" in c:
+                valid_cards.append(c)
+
+        return valid_cards
+
+    except Exception:
+        return []
