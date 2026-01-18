@@ -1,46 +1,30 @@
+from genai.topic_generator import generate_topic
 from models.summarization_model import load_summarizer
 from preprocessing.segment_text import segment_text
 import re
 
-# Load summarizer once (CPU-based model assumed)
+# Load summarizer once (CPU-based)
 summarizer = load_summarizer()
 
 
-def generate_study_materials(transcript: str) -> dict:
-    transcript = transcript.strip()
+def generate_notes(text: str) -> str:
+    """
+    Generate clean bullet-point notes from transcript
+    """
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    notes = [
+        f"• {s.strip()}"
+        for s in sentences
+        if len(s.split()) > 6
+    ]
+    return "\n".join(notes)
 
-    if not transcript:
-        return {
-            "topic": "No content detected",
-            "text_notes": "",
-            "smart_summary": "",
-            "flashcards": []
-        }
 
-    # =========================
-    # 1️⃣ TOPIC (CLEAR & SHORT)
-    # =========================
-    topic_input = transcript[:700]
-
-    topic_result = summarizer(
-        topic_input,
-        max_length=18,
-        min_length=6,
-        do_sample=False
-    )
-
-    topic = topic_result[0]["summary_text"].strip().rstrip(".")
-
-    # =========================
-    # 2️⃣ TEXT NOTES (CLEAN BULLETS)
-    # =========================
-    sentences = re.split(r'(?<=[.!?])\s+', transcript)
-    text_notes = "\n".join(f"• {s.strip()}" for s in sentences if len(s.split()) > 5)
-
-    # =========================
-    # 3️⃣ SMART SUMMARY (DEDUPLICATED)
-    # =========================
-    summary_segments = segment_text(transcript, max_words=220)
+def generate_summary(text: str) -> str:
+    """
+    Generate smart, deduplicated summary
+    """
+    summary_segments = segment_text(text, max_words=220)
     summary_chunks = []
     seen = set()
 
@@ -56,65 +40,42 @@ def generate_study_materials(transcript: str) -> dict:
         )
 
         summary = result[0]["summary_text"].strip()
-
-        # Avoid repetition
         key = summary[:60]
+
         if key not in seen:
             seen.add(key)
             summary_chunks.append(summary)
 
-    smart_summary = " ".join(summary_chunks)
+    return " ".join(summary_chunks)
+
+
+def generate_study_materials(cleaned_text: str) -> dict:
+    cleaned_text = cleaned_text.strip()
+
+    if not cleaned_text:
+        return {
+            "topic": "No content detected",
+            "text_notes": "",
+            "smart_summary": ""
+        }
 
     # =========================
-    # 4️⃣ SEMANTIC FLASHCARDS
+    # 1️⃣ TOPIC (GenAI)
     # =========================
-    flashcards = []
-    summary_sentences = re.split(r'(?<=[.!?])\s+', smart_summary)
+    topic = generate_topic(cleaned_text)
 
-    for s in summary_sentences:
-        if len(flashcards) >= 5:
-            break
+    # =========================
+    # 2️⃣ NOTES (CPU)
+    # =========================
+    notes = generate_notes(cleaned_text)
 
-        words = s.split()
-        if len(words) < 10:
-            continue
-
-        lower_s = s.lower()
-
-        if " because " in lower_s:
-            flashcards.append({
-                "Q": "Why does this happen?",
-                "A": s
-            })
-
-        elif any(k in lower_s for k in ["used for", "helps", "allows", "enables"]):
-            flashcards.append({
-                "Q": "What is the purpose discussed here?",
-                "A": s
-            })
-
-        elif any(k in lower_s for k in ["difference", "compare", "versus"]):
-            flashcards.append({
-                "Q": "What comparison is explained?",
-                "A": s
-            })
-
-        elif any(k in lower_s for k in ["important", "key", "critical", "main"]):
-            flashcards.append({
-                "Q": "Why is this concept important?",
-                "A": s
-            })
-
-    # Fallback flashcard
-    if not flashcards and smart_summary:
-        flashcards.append({
-            "Q": "What is the core idea of this lecture?",
-            "A": smart_summary
-        })
+    # =========================
+    # 3️⃣ SUMMARY (CPU)
+    # =========================
+    summary = generate_summary(cleaned_text)
 
     return {
         "topic": topic,
-        "text_notes": text_notes,
-        "smart_summary": smart_summary,
-        "flashcards": flashcards
+        "text_notes": notes,
+        "smart_summary": summary
     }
