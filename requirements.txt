@@ -23,3 +23,5 @@ tqdm>=4.66.0
 # ================= Core =================
 torch>=2.0.0
 numpy
+
+google-generativeai

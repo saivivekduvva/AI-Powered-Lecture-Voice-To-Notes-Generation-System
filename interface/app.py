@@ -8,9 +8,13 @@ import tempfile
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT_DIR))
 
+# ---------------- IMPORTS ----------------
 from services.speech_to_text import speech_to_text
 from preprocessing.clean_text import clean_transcript
 from services.note_generator import generate_study_materials
+
+from genai.flashcard_generator import generate_flashcards
+from genai.quiz_generator import generate_quiz
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -26,28 +30,27 @@ body {
     font-family: 'Segoe UI', sans-serif;
 }
 
-.glass-box {
+.glass {
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 30px;
+    border-radius: 18px;
+    padding: 22px;
     border: 1px solid rgba(255,255,255,0.15);
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
 }
 
-.section-heading {
-    font-size: 28px;
+.section-title {
+    font-size: 26px;
     font-weight: 700;
-    margin: 30px 0 10px 0;
+    margin: 20px 0;
     color: #7dd3fc;
     border-left: 5px solid #7dd3fc;
     padding-left: 12px;
 }
 
-.subtext {
-    font-size: 15px;
+.small-text {
     color: #cfcfcf;
-    margin-bottom: 12px;
+    font-size: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -55,35 +58,36 @@ body {
 # ---------------- SIDEBAR ----------------
 st.sidebar.title("📘 User Guide")
 st.sidebar.markdown("""
-### 👋 Welcome!
-This tool converts **lecture audio** into structured study material:
-
-• 🧭 Topic detection  
-• 📝 Full text notes  
-• 📄 Smart summary  
-• 🧠 Flashcards  
-
----
-### 🛠 How to Use
-1. Upload a **.wav / .mp3** lecture  
-2. Wait for processing  
-3. Start revising  
+### What this does
+Convert lecture audio into:
+- 🧭 Topic
+- 📝 Notes
+- 📄 Smart summary
+- 🧠 Flashcards (GenAI)
+- 🧪 Quiz (GenAI)
 
 ---
-💡 Tip: Clear audio improves accuracy
+
+### How to use
+1. Upload **.wav / .mp3**
+2. Wait for processing
+3. Revise instantly
+
+---
+
+💡 Clear audio = better results
 """)
 
-# ---------------- MAIN TITLE ----------------
+# ---------------- HEADER ----------------
 st.markdown("<h1 style='text-align:center;'>🎙 Lecture Voice-to-Notes Generator</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;' class='subtext'>AI-powered study assistant</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;' class='small-text'>AI-powered academic assistant using GenAI</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # ---------------- UPLOAD ----------------
-st.markdown("<div class='section-heading'>📤 Upload Lecture Audio</div>", unsafe_allow_html=True)
-st.markdown("<p class='subtext'>Upload a .wav or .mp3 lecture recording</p>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'>📤 Upload Lecture Audio</div>", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
-    "Choose an audio file",
+    "Upload lecture audio",
     type=["wav", "mp3"],
     label_visibility="collapsed"
 )
@@ -91,66 +95,94 @@ uploaded_file = st.file_uploader(
 # ---------------- PROCESS ----------------
 if uploaded_file:
     try:
-        # Use safe temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(uploaded_file.read())
             temp_audio_path = tmp.name
 
-        with st.spinner("🔊 Transcribing lecture audio..."):
+        with st.spinner("🔊 Transcribing audio..."):
             transcript = speech_to_text(temp_audio_path)
 
         with st.spinner("🧹 Cleaning transcript..."):
             cleaned_text = clean_transcript(transcript)
 
-        with st.spinner("🧠 Generating study materials..."):
-            result = generate_study_materials(cleaned_text)
+        with st.spinner("🧠 Generating notes & summary..."):
+            notes = generate_study_materials(cleaned_text)
+
+        with st.spinner("🧠 Generating GenAI flashcards..."):
+            flashcards = generate_flashcards(notes["text_notes"])
+
+        # ---- SAFE QUIZ GENERATION ----
+        quiz = None
+        with st.spinner("🧪 Generating GenAI quiz..."):
+            try:
+                quiz = generate_quiz(notes["text_notes"])
+                if not isinstance(quiz, list):
+                    quiz = None
+            except Exception:
+                quiz = None
 
         st.success("✅ Study materials generated successfully!")
 
-        # =========================
-        # 🧭 TOPIC
-        # =========================
-        st.markdown("<div class='section-heading'>🧭 Topic</div>", unsafe_allow_html=True)
-        with st.container():
-            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
-            st.write(result["topic"])
+        # ---------------- TABS ----------------
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "🧭 Topic",
+            "📝 Notes",
+            "📄 Summary",
+            "🧠 Flashcards",
+            "🧪 Quiz (GenAI)"
+        ])
+
+        # ---------- TOPIC ----------
+        with tab1:
+            st.markdown("<div class='glass'>", unsafe_allow_html=True)
+            st.write(notes["topic"])
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # =========================
-        # 📝 TEXT NOTES
-        # =========================
-        st.markdown("<div class='section-heading'>📝 Text Notes (Full Lecture)</div>", unsafe_allow_html=True)
-        st.markdown("<p class='subtext'>Complete audio-to-text conversion</p>", unsafe_allow_html=True)
-
-        with st.container():
-            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
-            st.text(result["text_notes"])
+        # ---------- NOTES ----------
+        with tab2:
+            st.markdown("<div class='glass'>", unsafe_allow_html=True)
+            st.text(notes["text_notes"])
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # =========================
-        # 📄 SMART SUMMARY
-        # =========================
-        st.markdown("<div class='section-heading'>📄 Smart Summary</div>", unsafe_allow_html=True)
-        with st.container():
-            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
-            st.write(result["smart_summary"])
+        # ---------- SUMMARY ----------
+        with tab3:
+            st.markdown("<div class='glass'>", unsafe_allow_html=True)
+            st.write(notes["smart_summary"])
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # =========================
-        # 🧠 FLASHCARDS
-        # =========================
-        st.markdown("<div class='section-heading'>🧠 Flashcards</div>", unsafe_allow_html=True)
+        # ---------- FLASHCARDS ----------
+        with tab4:
+            if flashcards:
+                for i, card in enumerate(flashcards, 1):
+                    with st.expander(f"📌 Flashcard {i}"):
+                        st.markdown(f"**❓ Question**: {card.get('question', '')}")
+                        st.markdown(f"**✅ Answer**: {card.get('answer', '')}")
+                        if card.get("concept"):
+                            st.markdown(f"🧠 *Concept*: {card.get('concept')}")
+            else:
+                st.info("No flashcards generated.")
 
-        if result["flashcards"]:
-            for i, card in enumerate(result["flashcards"], start=1):
-                with st.expander(f"📌 Flashcard {i}"):
-                    st.markdown(f"**❓ Question:** {card['Q']}")
-                    st.markdown(f"**✅ Answer:** {card['A']}")
-        else:
-            st.info("No flashcards generated.")
+        # ---------- QUIZ ----------
+        with tab5:
+            if quiz:
+                for i, q in enumerate(quiz, 1):
+                    with st.expander(f"🧪 Question {i}"):
+                        st.markdown(f"**❓ {q.get('question', '')}**")
+
+                        if q.get("type") == "MCQ":
+                            for opt in q.get("options", []):
+                                st.markdown(f"- {opt}")
+                            st.markdown(f"✅ **Answer**: {q.get('answer', '')}")
+                        else:
+                            st.markdown(f"✍ **Answer**: {q.get('answer', '')}")
+
+                        if q.get("concept"):
+                            st.markdown(f"🧠 *Concept*: {q.get('concept')}")
+            else:
+                st.info("⚠️ Quiz could not be generated for this lecture.")
 
     except Exception as e:
-        st.error(f"❌ Error occurred: {e}")
+        st.error(f"❌ Error: {e}")
 
     finally:
         if "temp_audio_path" in locals():
