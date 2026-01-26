@@ -1,27 +1,27 @@
 [
     {
-        "question": "If an AI system like AlphaGo excels only at the game of Go and cannot perform tasks like playing chess, what core characteristic defines its classification within AI?",
-        "answer": "It is classified as Weak AI (or Narrow AI) because it focuses solely on mastering a single, specific task.",
-        "concept": "Defining characteristics of Weak AI (Narrow AI)"
+        "question": "What is the purpose of Artificial Intelligence (AI)?",
+        "answer": "To artificially incorporate human-like intelligence in machines to perform tasks.",
+        "concept": "Definition of AI"
     },
     {
-        "question": "What fundamental capability allows an AI robot to successfully navigate a new, previously unseen environment (e.g., a field with varying lighting and landscape)?",
-        "answer": "Generalized learning, which is the ability to react appropriately to new or varied situations.",
-        "concept": "Generalized learning in AI systems"
+        "question": "What is the robot's ability to react correctly to new situations called?",
+        "answer": "Generalized learning.",
+        "concept": "Generalized Learning"
     },
     {
-        "question": "How does the ability of the lab robot to use a provided plank to cross a stream illustrate a core function of Artificial Intelligence?",
-        "answer": "It demonstrates the ability to use given input (the plank) to reason and find a practical solution to a defined problem (crossing the stream).",
-        "concept": "AI's role in problem-solving and utilizing input"
+        "question": "What is the other name for Weak AI?",
+        "answer": "Narrow AI.",
+        "concept": "Weak AI"
     },
     {
-        "question": "Explain the hierarchical relationship between Artificial Intelligence (AI), Machine Learning (ML), and Deep Learning (DL).",
-        "answer": "AI is the overarching field; Machine Learning is a technique used to achieve AI by learning from data; and Deep Learning is a subset of Machine Learning that uses structures inspired by the human brain.",
-        "concept": "Distinction and hierarchy between AI, Machine Learning, and Deep Learning"
+        "question": "What type of AI exists only in fiction currently?",
+        "answer": "Strong AI.",
+        "concept": "Strong AI"
     },
     {
-        "question": "What concept describes the predicted point in time (e.g., 2045) when artificial intelligence becomes as smart as the human mind, often associated with predictions from futurists like Ray Kurzweil?",
+        "question": "What concept is defined as robots being as smart as humans by 2045?",
         "answer": "The point of singularity.",
-        "concept": "The concept of the Point of Singularity"
+        "concept": "Singularity"
     }
 ]
