@@ -14,7 +14,7 @@ from services.speech_to_text import speech_to_text
 from preprocessing.clean_text import clean_transcript
 from services.note_generator import generate_study_materials
 from genai.flashcard_generator import generate_flashcards
-from genai.quiz_generator import generate_quiz
+# REMOVED: quiz_generator import
 
 # ---------------- SESSION STATE ----------------
 if "processed" not in st.session_state:
@@ -22,13 +22,7 @@ if "processed" not in st.session_state:
 if "view" not in st.session_state:
     st.session_state.view = "Notes"
 
-# Quiz Specific State
-if "quiz_index" not in st.session_state:
-    st.session_state.quiz_index = 0
-if "quiz_score" not in st.session_state:
-    st.session_state.quiz_score = 0
-if "quiz_complete" not in st.session_state:
-    st.session_state.quiz_complete = False
+# REMOVED: Quiz Specific State (quiz_index, quiz_score, quiz_complete)
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -58,7 +52,6 @@ st.markdown("""
     border-right: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* Sidebar Headings */
 .sidebar-header {
     font-size: 1.1rem;
     font-weight: 700;
@@ -66,7 +59,6 @@ st.markdown("""
     margin-bottom: 10px;
 }
 
-/* Glassmorphic Cards */
 .content-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
@@ -78,7 +70,6 @@ st.markdown("""
     color: #1e293b;
 }
 
-/* Perfectly Fitted Action Buttons */
 div.stButton > button {
     width: 100%;
     border-radius: 100px !important;
@@ -90,7 +81,6 @@ div.stButton > button {
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     transition: all 0.2s ease-in-out;
     white-space: nowrap !important;
-    overflow: hidden;
 }
 
 div.stButton > button:hover {
@@ -100,7 +90,6 @@ div.stButton > button:hover {
     box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.15);
 }
 
-/* Header Text Styling */
 .main-title {
     font-size: 3.2rem;
     font-weight: 900;
@@ -112,7 +101,6 @@ div.stButton > button:hover {
     margin-bottom: 5px;
 }
 
-/* Centered Uploader Style */
 [data-testid="stFileUploader"] {
     background: rgba(255, 255, 255, 0.6);
     padding: 15px;
@@ -129,7 +117,7 @@ with st.sidebar:
     <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
     1. <b>Upload</b> an MP3 or WAV lecture file.<br>
     2. <b>Process:</b> Wait as AI transcribes and analyzes.<br>
-    3. <b>Review:</b> Toggle between Notes, Summary, and Quizzes.<br>
+    3. <b>Review:</b> Toggle between Notes, Summary, and Cards.<br>
     </div>
     """, unsafe_allow_html=True)
     
@@ -186,15 +174,13 @@ if uploaded_file:
                 st.write("🃏 Designing Flashcards...")
                 flashcards = generate_flashcards(notes.get("text_notes", ""))
                 
-                st.write("🧠 Organizing Quiz...")
-                quiz = generate_quiz(notes.get("text_notes", ""))
+                # REMOVED: generate_quiz step
                 
                 status.update(label="✨ Intelligence Assets Ready!", state="complete")
 
             st.session_state.data = {
                 "notes": notes,
-                "flashcards": flashcards,
-                "quiz": quiz
+                "flashcards": flashcards
             }
             st.session_state.processed = True
             
@@ -215,7 +201,8 @@ if uploaded_file:
         )
         st.markdown("<br>", unsafe_allow_html=True)
 
-        nav_cols = st.columns([1.5, 0.8, 0.8, 0.8, 0.8, 1.5], gap="small")
+        # Adjusted columns for 3 buttons instead of 4
+        nav_cols = st.columns([2, 1, 1, 1, 2], gap="small")
 
         with nav_cols[1]:
             if st.button("📄 Notes"):
@@ -226,9 +213,6 @@ if uploaded_file:
         with nav_cols[3]:
             if st.button("🃏 Cards"):
                 st.session_state.view = "Flashcards"
-        with nav_cols[4]:
-            if st.button("🧠 Quiz"):
-                st.session_state.view = "Quiz"
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -236,22 +220,18 @@ if uploaded_file:
         display_col1, display_col2, display_col3 = st.columns([1, 6, 1])
 
         with display_col2:
-
-            # ---------------- NOTES VIEW ----------------
             if st.session_state.view == "Notes":
                 st.markdown("<div class='content-card'>", unsafe_allow_html=True)
                 st.markdown("### 📝 Detailed Study Notes")
                 st.write(data['notes'].get("text_notes", "Data unavailable."))
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            # ---------------- SUMMARY VIEW ----------------
             elif st.session_state.view == "Summary":
                 st.markdown("<div class='content-card'>", unsafe_allow_html=True)
                 st.markdown("### ⚡ Smart Summary")
                 st.write(data['notes'].get("smart_summary", "Data unavailable."))
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            # ---------------- FLASHCARDS VIEW ----------------
             elif st.session_state.view == "Flashcards":
                 f_cards = data.get('flashcards', [])
                 if f_cards:
@@ -262,84 +242,3 @@ if uploaded_file:
                             st.markdown(f"**A:** {card.get('answer', '')}")
                 else:
                     st.info("Insufficient content to generate flashcards.")
-
-            # ---------------- QUIZ VIEW ----------------
-            elif st.session_state.view == "Quiz":
-
-                quiz_result = data.get("quiz", {})
-                quiz_data = quiz_result.get("quiz", [])
-                quiz_status = quiz_result.get("status")
-
-                # ---- INIT QUIZ STATE SAFELY ----
-                if "quiz_index" not in st.session_state:
-                    st.session_state.quiz_index = 0
-                if "quiz_score" not in st.session_state:
-                    st.session_state.quiz_score = 0
-                if "quiz_complete" not in st.session_state:
-                    st.session_state.quiz_complete = False
-
-                # ---- HANDLE FAILURE ----
-                if quiz_status != "OK" or not quiz_data:
-                    st.info("Insufficient content to generate a quiz.")
-
-                # ---- FINAL SCORE SCREEN ----
-                elif st.session_state.quiz_complete:
-                    st.markdown("<div class='content-card' style='text-align: center;'>", unsafe_allow_html=True)
-                    st.balloons()
-                    st.markdown("## 🎉 Quiz Completed!")
-                    st.markdown(f"### Final Score: {st.session_state.quiz_score} / {len(quiz_data)}")
-
-                    if st.button("🔄 Restart Quiz"):
-                        st.session_state.quiz_index = 0
-                        st.session_state.quiz_score = 0
-                        st.session_state.quiz_complete = False
-                        st.rerun()
-
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-                # ---- QUESTION SCREEN ----
-                else:
-                    # Safety bound check
-                    if st.session_state.quiz_index >= len(quiz_data):
-                        st.session_state.quiz_complete = True
-                        st.rerun()
-
-                    curr_q = quiz_data[st.session_state.quiz_index]
-
-                    st.markdown("<div class='content-card'>", unsafe_allow_html=True)
-                    st.markdown(
-                        f"**Question {st.session_state.quiz_index + 1} of {len(quiz_data)}**"
-                    )
-                    st.markdown(f"### {curr_q.get('question', '')}")
-
-                    options = curr_q.get("options", [])
-
-                    if options:
-                        choice = st.radio(
-                            "Select an answer:",
-                            options,
-                            key=f"q_{st.session_state.quiz_index}"
-                        )
-
-                        if st.button("Submit Answer"):
-                            if choice == curr_q.get("answer"):
-                                st.success("✅ Correct!")
-                                st.session_state.quiz_score += 1
-                            else:
-                                st.error(
-                                    f"❌ Incorrect. The correct answer was: {curr_q.get('answer')}"
-                                )
-
-                            if st.session_state.quiz_index + 1 < len(quiz_data):
-                                st.session_state.quiz_index += 1
-                            else:
-                                st.session_state.quiz_complete = True
-
-                            st.rerun()
-                    else:
-                        st.warning("This question has no options.")
-                        if st.button("Skip"):
-                            st.session_state.quiz_index += 1
-                            st.rerun()
-
-                    st.markdown("</div>", unsafe_allow_html=True)
