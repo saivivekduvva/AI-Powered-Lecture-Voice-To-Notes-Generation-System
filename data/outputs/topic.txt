@@ -1,1 +1,1 @@
-Artificial Intelligence Core Concepts Explained
+Core Concepts of Linear Algebra

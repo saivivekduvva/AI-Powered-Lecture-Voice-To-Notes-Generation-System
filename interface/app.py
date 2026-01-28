@@ -35,10 +35,10 @@ st.set_page_config(
 
 # ---------------- THEME VARIABLES ----------------
 if st.session_state.dark_mode:
-    BG = "#0b0e14"       # Deep Midnight (No muddy gray)
-    FG = "#f8fafc"       # Crisp White/Slate
-    CARD = "#161b22"     # Soft Charcoal
-    ACCENT = "#7c3aed"   # Clean Violet
+    BG = "#0b0e14"       
+    FG = "#f8fafc"       
+    CARD = "#161b22"     
+    ACCENT = "#7c3aed"   
     BORDER = "rgba(255, 255, 255, 0.1)"
 else:
     BG = "#f8fafc"
@@ -70,7 +70,6 @@ st.markdown(f"""
     border-right: 1px solid {BORDER};
 }}
 
-/* ---------- SIDEBAR BOX ---------- */
 .sidebar-box {{
     background: {CARD};
     border-radius: 12px;
@@ -90,43 +89,51 @@ st.markdown(f"""
     margin-bottom: 0px;
 }}
 
-/* ---------- FILE UPLOAD (Dotted Fix) ---------- */
+/* ---------- FILE UPLOAD ---------- */
 [data-testid="stFileUploader"] {{
     background-color: {CARD} !important;
     padding: 30px !important;
     border-radius: 20px !important;
-    border: 2px dashed {ACCENT} !important; /* Clean Dashed Outline */
+    border: 2px dashed {ACCENT} !important;
     transition: 0.3s ease;
 }}
 
-/* ---------- BUTTONS ---------- */
+/* ---------- NAVIGATION ROW ALIGNMENT ---------- */
+.nav-container {{
+    max-width: 600px;
+    margin: 40px auto 10px auto; /* Centers the navigation bar */
+}}
+
+/* Force Streamlit buttons in the nav to align */
 div.stButton > button {{
+    width: 100% !important;
+    height: 45px !important;
     border-radius: 12px !important;
-    padding: 10px 20px !important;
     font-weight: 600 !important;
     background-color: {CARD} !important;
     color: {FG} !important;
     border: 1px solid {BORDER} !important;
-    transition: 0.2s ease-in-out;
+    margin-bottom: 0px !important; /* Removes staggered heights */
+    transition: all 0.2s ease;
 }}
 
-/* ---------- ACTIVE TAB ---------- */
 .active-tab button {{
     background-color: {ACCENT} !important;
     color: white !important;
     border: none !important;
-    box-shadow: 0 4px 15px {ACCENT}66;
+    box-shadow: 0 4px 20px {ACCENT}88 !important;
+    transform: translateY(-2px);
 }}
 
 /* ---------- CONTENT CARD ---------- */
 .content-card {{
     background: {CARD};
     border-radius: 24px;
-    padding: 35px;
+    padding: 40px;
     max-width: 900px;
-    margin: 30px auto;
+    margin: 20px auto;
     border: 1px solid {BORDER};
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
 }}
 
 </style>
@@ -135,43 +142,30 @@ div.stButton > button {{
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
     st.markdown("## 📘 Lecture Intelligence")
-    st.markdown(f"""
-    <div class="sidebar-box">
-    🎧 Upload lecture audio<br>
-    🧠 AI understands content<br>
-    📚 Get notes, summary & cards
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown(f'<div class="sidebar-box">🎧 Upload audio<br>🧠 AI processing<br>📚 Study assets</div>', unsafe_allow_html=True)
     st.toggle("🌙 Dark Mode", key="dark_mode")
     st.divider()
-
     if st.button("🗑️ Reset Workspace", use_container_width=True):
-        for k in list(st.session_state.keys()):
-            del st.session_state[k]
+        for k in list(st.session_state.keys()): del st.session_state[k]
         st.rerun()
 
 # ---------------- HEADER ----------------
 st.markdown("<h1 class='main-title'>Lecture Intelligence</h1>", unsafe_allow_html=True)
-st.markdown(
-    f"<p style='text-align:center; opacity:0.7; color:{FG};'>Advanced Transcription & Study Asset Synthesizer</p>",
-    unsafe_allow_html=True
-)
+st.markdown(f"<p style='text-align:center; opacity:0.7; color:{FG};'>Advanced Transcription & Study Asset Synthesizer</p>", unsafe_allow_html=True)
 
 # ---------------- FILE UPLOAD ----------------
 _, mid, _ = st.columns([1, 2, 1])
 with mid:
     uploaded_file = st.file_uploader("", type=["wav", "mp3"])
 
-# ---------------- PROCESSING & CONTENT ----------------
+# ---------------- PROCESSING ----------------
 if uploaded_file:
-    # Logic to handle processing
     if not st.session_state.processed:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(uploaded_file.read())
             audio_path = tmp.name
         
-        with st.status("💎 Processing lecture...", expanded=True):
+        with st.status("💎 Processing...", expanded=True):
             try:
                 transcript = speech_to_text(audio_path)
                 cleaned = clean_transcript(transcript)
@@ -179,30 +173,31 @@ if uploaded_file:
                 flashcards = generate_flashcards(notes.get("text_notes", ""))
                 st.session_state.data = {"notes": notes, "flashcards": flashcards}
                 st.session_state.processed = True
-            except NameError:
-                st.error("Service functions missing. Please verify imports.")
+                os.remove(audio_path)
+            except Exception as e:
+                st.error(f"Error: {e}")
+        st.rerun()
 
-        if st.session_state.processed:
-            os.remove(audio_path)
-            st.rerun()
-
-    # Navigation
+    # ---------------- ALIGNED NAVIGATION ----------------
     data = st.session_state.data
-    st.markdown(f"<h3 style='text-align:center; margin-top:20px;'>📖 {data['notes'].get('topic','Overview')}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align:center; margin-top:30px;'>📖 {data['notes'].get('topic','Overview')}</h3>", unsafe_allow_html=True)
     
-    nav = st.columns(3)
-    views = ["Notes", "Summary", "Flashcards"]
-    icons = ["📄", "💡", "🃏"]
+    # Wrapped in a container for centered alignment
+    st.markdown("<div class='nav-container'>", unsafe_allow_html=True)
+    nav_cols = st.columns(3)
     
-    for i, v in enumerate(views):
-        with nav[i]:
-            cls = "active-tab" if st.session_state.view == v else ""
-            st.markdown(f"<div class='{cls}'>", unsafe_allow_html=True)
-            if st.button(f"{icons[i]} {v}", key=f"btn_{v}", use_container_width=True):
-                st.session_state.view = v
+    views = [("Notes", "📄"), ("Summary", "💡"), ("Flashcards", "🃏")]
+    
+    for i, (v_name, icon) in enumerate(views):
+        with nav_cols[i]:
+            is_active = "active-tab" if st.session_state.view == v_name else ""
+            st.markdown(f"<div class='{is_active}'>", unsafe_allow_html=True)
+            if st.button(f"{icon} {v_name}", key=f"nav_{v_name}", use_container_width=True):
+                st.session_state.view = v_name
             st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Content Display
+    # ---------------- CONTENT DISPLAY ----------------
     st.markdown("<div class='content-card'>", unsafe_allow_html=True)
     if st.session_state.view == "Notes":
         st.markdown("### 📝 Detailed Study Notes")

@@ -1,12 +1,18 @@
+import os
+import sys
+import tempfile
 from pathlib import Path
 
+# ---------------- PATH FIX ----------------
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+# ---------------- IMPORTS ----------------
 from services.speech_to_text import speech_to_text
 from preprocessing.clean_text import clean_transcript
 from services.note_generator import generate_study_materials
-
 from genai.flashcard_generator import generate_flashcards
-from genai.quiz_generator import generate_quiz
-
 from utils.file_io import save_text, save_json
 from utils.logger import get_logger
 
@@ -14,6 +20,7 @@ from utils.logger import get_logger
 logger = get_logger()
 
 # ---------------- CONFIG ----------------
+# Default audio path for local testing
 AUDIO_PATH = "data/raw_audio/sample_lecture.wav"
 
 TRANSCRIPT_DIR = Path("data/transcripts")
@@ -21,31 +28,33 @@ PROCESSED_DIR = Path("data/processed_text")
 OUTPUT_DIR = Path("data/outputs")
 
 # Ensure output directories exist
-TRANSCRIPT_DIR.mkdir(parents=True, exist_ok=True)
-PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
+for folder in [TRANSCRIPT_DIR, PROCESSED_DIR, OUTPUT_DIR]:
+    folder.mkdir(parents=True, exist_ok=True)
 
 def main():
-    logger.info("🚀 Starting Lecture Voice-to-Notes Generator")
+    logger.info("🚀 Starting Lecture Intelligence Asset Synthesizer")
 
-    # ---------------- SPEECH TO TEXT ----------------
+    # 1. SPEECH TO TEXT
     try:
+        if not Path(AUDIO_PATH).exists():
+            logger.error(f"Audio file not found at {AUDIO_PATH}")
+            return
+
         logger.info("🎙️ Running Speech-to-Text")
         transcript = speech_to_text(AUDIO_PATH)
 
         if not transcript or not isinstance(transcript, str):
-            raise ValueError("Empty or invalid transcript")
+            raise ValueError("Empty or invalid transcript generated")
 
         save_text(TRANSCRIPT_DIR / "sample_lecture.txt", transcript)
 
     except Exception as e:
         logger.error(f"Speech-to-Text failed: {e}")
-        return  # ❌ Cannot proceed without transcript
+        return 
 
-    # ---------------- CLEANING ----------------
+    # 2. TRANSCRIPT CLEANING
     try:
-        logger.info("🧹 Cleaning transcript")
+        logger.info("🧹 Cleaning transcript for AI processing")
         cleaned_text = clean_transcript(transcript)
 
         if not cleaned_text:
@@ -57,56 +66,42 @@ def main():
         logger.error(f"Transcript cleaning failed: {e}")
         return
 
-    # ---------------- NOTES GENERATION ----------------
+    # 3. STUDY MATERIALS (Notes & Summary)
     try:
-        logger.info("📝 Generating notes and summaries")
+        logger.info("📝 Generating study notes and smart summary")
         notes_data = generate_study_materials(cleaned_text)
 
         if not isinstance(notes_data, dict):
             raise ValueError("Notes generator returned invalid format")
 
-        save_text(OUTPUT_DIR / "topic.txt", notes_data.get("topic", ""))
+        # Save individual assets
+        save_text(OUTPUT_DIR / "topic.txt", notes_data.get("topic", "Untitled Lecture"))
         save_text(OUTPUT_DIR / "text_notes.txt", notes_data.get("text_notes", ""))
         save_text(OUTPUT_DIR / "smart_summary.txt", notes_data.get("smart_summary", ""))
+        
+        logger.info(f"Generated assets for topic: {notes_data.get('topic')}")
 
     except Exception as e:
         logger.error(f"Notes generation failed: {e}")
         return
 
-    # ---------------- FLASHCARDS (SAFE) ----------------
-    logger.info("🃏 Generating GenAI flashcards")
+    # 4. FLASHCARDS
+    logger.info("🃏 Synthesizing study flashcards")
     try:
         flashcards = generate_flashcards(notes_data.get("text_notes", ""))
 
         if isinstance(flashcards, list) and flashcards:
             save_json(OUTPUT_DIR / "flashcards.json", flashcards)
-            logger.info("Flashcards generated successfully")
+            logger.info(f"Successfully generated {len(flashcards)} flashcards")
         else:
-            logger.warning("Flashcards generation returned empty or invalid data")
-            save_text(OUTPUT_DIR / "flashcards_error.txt", str(flashcards))
+            logger.warning("Flashcards generation returned empty data")
+            save_text(OUTPUT_DIR / "flashcards_error.txt", "No flashcards generated.")
 
     except Exception as e:
         logger.error(f"Flashcards generation failed: {e}")
         save_text(OUTPUT_DIR / "flashcards_error.txt", str(e))
 
-    # ---------------- QUIZ (ULTRA SAFE & ISOLATED) ----------------
-    logger.info("🧠 Generating GenAI quiz")
-    try:
-        quiz = generate_quiz(notes_data.get("text_notes", ""))
-
-        if isinstance(quiz, list) and quiz:
-            save_json(OUTPUT_DIR / "quiz.json", quiz)
-            logger.info("Quiz generated successfully")
-        else:
-            logger.warning("Quiz generation returned empty or invalid data")
-            save_text(OUTPUT_DIR / "quiz_error.txt", str(quiz))
-
-    except Exception as e:
-        logger.error(f"Quiz generation failed: {e}")
-        save_text(OUTPUT_DIR / "quiz_error.txt", str(e))
-
-    logger.info("✅ Project executed successfully")
-
+    logger.info("✅ All lecture assets synthesized successfully")
 
 if __name__ == "__main__":
     main()

@@ -1,27 +1,27 @@
 [
     {
-        "question": "What is the purpose of Artificial Intelligence (AI)?",
-        "answer": "To artificially incorporate human-like intelligence in machines to perform tasks.",
-        "concept": "Definition of AI"
+        "question": "What are the four main components of linear algebra?",
+        "answer": "Vectors, vector spaces, linear transformations, and systems of linear equations.",
+        "concept": "Linear Algebra Components"
     },
     {
-        "question": "What is the robot's ability to react correctly to new situations called?",
-        "answer": "Generalized learning.",
-        "concept": "Generalized Learning"
+        "question": "What two properties define a vector?",
+        "answer": "Magnitude and direction.",
+        "concept": "Vector Definition"
     },
     {
-        "question": "What is the other name for Weak AI?",
-        "answer": "Narrow AI.",
-        "concept": "Weak AI"
+        "question": "What are matrices used to represent?",
+        "answer": "Linear transformations and systems of linear equations.",
+        "concept": "Matrix Use"
     },
     {
-        "question": "What type of AI exists only in fiction currently?",
-        "answer": "Strong AI.",
-        "concept": "Strong AI"
+        "question": "What is the basis of a vector space?",
+        "answer": "A set of linearly independent vectors that span the space.",
+        "concept": "Basis"
     },
     {
-        "question": "What concept is defined as robots being as smart as humans by 2045?",
-        "answer": "The point of singularity.",
-        "concept": "Singularity"
+        "question": "What happens to an eigenvector when a matrix is applied to it?",
+        "answer": "It only changes by a scalar factor.",
+        "concept": "Eigenvector Property"
     }
 ]
