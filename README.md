@@ -1,178 +1,123 @@
-🎙️ Lecture Voice-to-Notes Generator
-AI-Powered Lecture Transcription, Smart Summaries & Semantic Flashcards
+🎙️ Voice to Notes System
 
-An AI-based system that converts lecture audio into accurate text notes, generates smart summaries, and creates semantic flashcards to improve student learning and revision efficiency.
+An AI-powered Lecture Voice-to-Notes Generator that converts spoken lectures into clean text, structured notes, summaries, flashcards, and quizzes.
+Built to help students focus on listening instead of writing during lectures.
 
-This project is built specifically for students, educators, and self-learners who want to transform long lectures into structured, exam-ready study material.
+Features :-
 
-🚀 Features
+🎧 Speech-to-Text Conversion from lecture audio
+🧹 Text Cleaning & Preprocessing
+📝 Structured Study Notes Generation
+✨ Smart Summaries
+🃏 AI-Generated Flashcards
 
-🎧 Lecture Audio Transcription
-
-Converts lecture audio (.wav, .mp3) into clean, readable text
-
-Powered by GPU-accelerated Whisper (faster-whisper)
-
-📝 Notes Generation
-
-Produces verbatim lecture notes
-
-Maintains topic flow and explanations
-
-🧠 Smart Summary
-
-AI-generated summaries in simple student-friendly language
-
-Highlights key concepts and important points
-
-🧩 Semantic Flashcards
-
-Concept-based flashcards for active recall
-
-Designed for quick revision and exam preparation
-
-⚡ GPU Optimized
-
-Uses CUDA-enabled NVIDIA GPUs
-
-Significantly faster than CPU-based transcription
-
-🌐 Web Interface
-
-Built with Streamlit
-
-Simple, clean, and beginner-friendly UI
-
-
-Lecture-Voice-to-Notes-Generator/
+VOICE TO NOTES SYSTEM
 │
-├── app.py                     # Streamlit application
-├── transcription/
-│   └── whisper_model.py       # Faster-Whisper GPU transcription
+├── configs/                     # Configuration files
 │
-├── note_generator/
-│   ├── notes.py               # Raw notes generation
-│   ├── summary.py             # Smart summary generation
-│   └── flashcards.py          # Semantic flashcard generator
+├── data/
+│   ├── raw_audio/               # Input lecture audio (.wav)
+│   ├── transcripts/             # Speech-to-text output
+│   ├── processed_text/          # Cleaned & processed text
+│   └── outputs/                 # Generated notes, summaries, quizzes
 │
-├── utils/
-│   └── file_handler.py        # File upload & processing utilities
+├── genai/
+│   ├── gemini_client.py         # Gemini API client
+│   ├── flashcard_generator.py   # GenAI flashcards
+│   ├── topic_generator.py       # Topic extraction
 │
-├── requirements.txt
-├── .gitignore
-└── README.md
+├── interface/
+│   └── app.py                   # Streamlit UI
+│
+├── models/
+│   └── summarization_model.py   # Summarization logic
+│
+├── preprocessing/
+│   ├── clean_text.py            # Text cleaning
+│   └── segment_text.py          # Text segmentation
+│
+├── services/
+│   ├── speech_to_text.py        # Audio → Text
+│   └── note_generator.py        # Notes generation
+│
+├── utils/                       # Helper utilities
+│
+├── tests/                       # Unit tests
+│
+├── main.py                      # Main pipeline runner
+├── requirements.txt             # Dependencies
+├── README.md                    # Project documentation
+└── .env                         # API keys (not committed)
 
+⚙️ Tech Stack :-
 
-🛠️ Tech Stack
-
-Python 3.10
-
+Python 3.9+
+Google Speech-to-Text / Whisper
+Google Gemini API (GenAI)
 Streamlit
+NLTK / Regex
+JSON
+PyTest
 
-faster-whisper
 
-PyTorch
-
-Sentence Transformers
-
-CUDA (for GPU acceleration)
-
-⚙️ Installation & Setup
+🔑 Environment Setup :-
 1️⃣ Clone the Repository
-git clone https://github.com/your-username/Lecture-Voice-to-Notes-Generator.git
-cd Lecture-Voice-to-Notes-Generator
+git clone https://github.com/your-username/voice-to-notes-system.git
+cd voice-to-notes-system
 
-2️⃣ Create Virtual Environment (Python 3.10 Recommended)
+2️⃣ Create Virtual Environment
 python -m venv venv
-
-
-Activate:
-
-# Windows
-venv\Scripts\activate
-
-# Linux / macOS
-source venv/bin/activate
+source venv/bin/activate        # Linux / Mac
+venv\Scripts\activate           # Windows
 
 3️⃣ Install Dependencies
 pip install -r requirements.txt
 
-🎮 GPU Configuration (Optional but Recommended)
+4️⃣ Setup Environment Variables
 
-Make sure:
+Create a .env file:
+GEMINI_API_KEY=your_api_key_here
 
-NVIDIA GPU is installed
+▶️ How to Run
+🔹 Run Full Pipeline
+python main.py
+🔹 Run Web Interface
+streamlit run interface/app.py
 
-CUDA is properly set up
+🧠 Workflow :-
 
-PyTorch supports CUDA
+Upload or provide lecture audio
+Convert audio → text
+Clean & preprocess transcript
 
-Check GPU availability:
-
-python -c "import torch; print(torch.cuda.is_available())"
-
-▶️ Run the Application
-streamlit run app.py
-
-
-Then open the URL shown in your browser.
-
-📌 How It Works
-
-Upload a lecture audio file
-
-Audio is transcribed using Whisper
-
-Raw notes are generated from transcription
-
-AI creates:
-
+Generate:
+Study Notes
 Smart Summary
+Flashcards
+Quiz Questions
+Display results via Streamlit UI
 
-Semantic Flashcards
+📌 Use Cases
+University lecture note generation
+Online course content summarization
+Exam preparation
+Self-study automation
+Accessibility support for learners
 
-Output is displayed in an easy-to-read format
+🚧 Future Enhancements :-
 
-🎯 Use Cases
+📹 Video lecture support
+🌍 Multilingual transcription
+☁️ Cloud deployment
+📱 Mobile-friendly UI
+🧩 Export to PDF / Notion
 
-College & University Students
+👨‍💻 Author :-
 
-Online Course Learners
+Sai Vivek Duvva
+AI & Python Developer
+IBM SkillsBuild Internship Project
 
-Educators creating study materials
-
-Exam & revision preparation
-
-Productivity & note automation
-
-📈 Future Improvements
-
-Topic-wise timestamps
-
-PDF / DOC export
-
-Multilingual lecture support
-
-Highlighting important exam questions
-
-Cloud deployment
-
-🤝 Contributing
-
-Contributions are welcome!
-
-Fork the repository
-
-Create a new branch
-
-Make your changes
-
-Submit a pull request
-
-⭐ Acknowledgements
-
-OpenAI & Whisper Community
-
-Hugging Face
-
-Streamlit Team
+⭐ Support
+If you like this project, give it a ⭐ on GitHub!
+Feel free to fork, improve, and contribute.
